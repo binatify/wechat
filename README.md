@@ -34,6 +34,6 @@ func main() {
 
 ### Features
 
-- [x] Auto login with qrcode link. 
+- [x] Auto login with qrcode. 
 - [x] Message linsten.
-- [ ] Messge sender.
+- [ ] Messge send.
