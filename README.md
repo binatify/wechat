@@ -29,6 +29,9 @@ func main() {
 
 ```
 
+![screen shot 2018-01-08 at 6 26 04 pm](https://user-images.githubusercontent.com/1459834/34666894-7f92a87a-f4a1-11e7-9dc0-0d49de6d9eb1.png)
+
+
 ### Features
 
 - [x] Auto login with qrcode link. 
