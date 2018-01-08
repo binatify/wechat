@@ -70,7 +70,7 @@ func (this *Client) Start() *Client {
 	util.RpcCall("[*] 正在获取 uuid ...", this.getUUID)
 
 	util.RpcCall("[*] 正在获取二维码 ...", this.qrCode)
-	util.RpcCall("[*] 请使用微信扫描二维码以登录 ...", this.qrCodeConfirm)
+	util.RpcCall("[*] 请使用微信扫描二维码 ...", this.qrCodeConfirm)
 	util.RpcCall("[*] 正在登录 ...", this.login)
 
 	util.RpcCall("[*] 获取微信初始化数据 ...", this.webwxinit)

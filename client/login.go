@@ -76,7 +76,7 @@ func (this *Client) qrCodeConfirm() bool {
 			continue
 		}
 
-		log.Println("[*] 请在手机上点击确认以登录 ...")
+		log.Println("[*] 请在手机上点击确认 ...")
 
 		if !this.doConfirm(0) {
 			continue
