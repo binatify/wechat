@@ -1,6 +1,6 @@
-# wecaht
+# wechat
 
-A new wechat robot with golang.
+A new WeChat robot with golang.
 
 
 ### Usage
