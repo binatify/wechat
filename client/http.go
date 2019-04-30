@@ -9,7 +9,7 @@ import (
 	"net/url"
 )
 
-func (this *Client) doGet(url string) (body []byte, err error) {
+func (c *Client) doGet(url string) (body []byte, err error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Fatalf("http.NewRequest(%s): %v\n", url, err)
@@ -24,7 +24,7 @@ func (this *Client) doGet(url string) (body []byte, err error) {
 	req.Header.Add("Upgrade-Insecure-Requests", "1")
 	req.Header.Add("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36")
 
-	resp, err := this.Do(req)
+	resp, err := c.Do(req)
 	if err != nil {
 		log.Fatalf("httpClient.Do(): %v\n", err)
 		return
@@ -40,7 +40,7 @@ func (this *Client) doGet(url string) (body []byte, err error) {
 	return
 }
 
-func (this *Client) doPost(reqURL string, params map[string]interface{}, isJson bool) (body []byte, err error) {
+func (c *Client) doPost(reqURL string, params map[string]interface{}, isJson bool) (body []byte, err error) {
 	var resp *http.Response
 
 	if isJson {
@@ -59,7 +59,7 @@ func (this *Client) doPost(reqURL string, params map[string]interface{}, isJson 
 		request.Header.Add("Referer", "https://wx.qq.com/")
 		request.Header.Add("User-agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.111 Safari/537.36")
 
-		resp, err = this.Do(request)
+		resp, err = c.Do(request)
 	} else {
 
 		v := url.Values{}
@@ -68,7 +68,7 @@ func (this *Client) doPost(reqURL string, params map[string]interface{}, isJson 
 			v.Add(key, value.(string))
 		}
 
-		resp, err = this.PostForm(reqURL, v)
+		resp, err = c.PostForm(reqURL, v)
 	}
 
 	if err != nil {

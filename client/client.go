@@ -64,16 +64,16 @@ func New(cfg *config.Config) *Client {
 	}
 }
 
-func (this *Client) Start() *Client {
+func (c *Client) Start() *Client {
 	log.Println("[*] 微信网页版启动中 ...")
 
-	util.RpcCall("[*] 正在获取 uuid ...", this.getUUID)
+	util.RpcCall("[*] 正在获取 uuid ...", c.getUUID)
 
-	util.RpcCall("[*] 正在获取二维码 ...", this.qrCode)
-	util.RpcCall("[*] 请使用微信扫描二维码 ...", this.qrCodeConfirm)
-	util.RpcCall("[*] 正在登录 ...", this.login)
+	util.RpcCall("[*] 正在获取二维码 ...", c.qrCode)
+	util.RpcCall("[*] 请使用微信扫描二维码 ...", c.qrCodeConfirm)
+	util.RpcCall("[*] 正在登录 ...", c.login)
 
-	util.RpcCall("[*] 获取微信初始化数据 ...", this.webwxinit)
+	util.RpcCall("[*] 获取微信初始化数据 ...", c.webwxinit)
 
-	return this
+	return c
 }

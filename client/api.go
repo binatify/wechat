@@ -12,12 +12,12 @@ import (
 	"github.com/binatify/wechat/util"
 )
 
-func (this *Client) webwxinit() bool {
-	url := fmt.Sprintf("%s/webwxinit?pass_ticket=%s&skey=%s&r=%s", this.baseUri, this.passTicket, this.skey, util.UnixTimestamp())
+func (c *Client) webwxinit() bool {
+	url := fmt.Sprintf("%s/webwxinit?pass_ticket=%s&skey=%s&r=%s", c.baseUri, c.passTicket, c.skey, util.UnixTimestamp())
 	params := make(map[string]interface{})
-	params["BaseRequest"] = this.baseRequest
+	params["BaseRequest"] = c.baseRequest
 
-	res, err := this.doPost(url, params, true)
+	res, err := c.doPost(url, params, true)
 	if err != nil {
 		return false
 	}
@@ -29,35 +29,35 @@ func (this *Client) webwxinit() bool {
 		return false
 	}
 
-	this.user = data["User"].(map[string]interface{})
-	this.syncKeyMap = data["SyncKey"].(map[string]interface{})
-	this.setsynckey()
+	c.user = data["User"].(map[string]interface{})
+	c.syncKeyMap = data["SyncKey"].(map[string]interface{})
+	c.setsynckey()
 
 	retCode := data["BaseResponse"].(map[string]interface{})["Ret"].(int)
 	return retCode == 0
 }
 
-func (this *Client) setsynckey() {
+func (c *Client) setsynckey() {
 	keys := []string{}
-	for _, keyVal := range this.syncKeyMap["List"].([]interface{}) {
+	for _, keyVal := range c.syncKeyMap["List"].([]interface{}) {
 		key := strconv.Itoa(int(keyVal.(map[string]interface{})["Key"].(int)))
 		value := strconv.Itoa(int(keyVal.(map[string]interface{})["Val"].(int)))
 		keys = append(keys, key+"_"+value)
 	}
-	this.synckey = strings.Join(keys, "|")
+	c.synckey = strings.Join(keys, "|")
 }
 
-func (this *Client) webwxstatusnotify() (ok bool) {
-	urlReq := fmt.Sprintf("%s/webwxstatusnotify?lang=zh_CN&pass_ticket=%s", this.baseUri, this.passTicket)
+func (c *Client) webwxstatusnotify() (ok bool) {
+	urlReq := fmt.Sprintf("%s/webwxstatusnotify?lang=zh_CN&pass_ticket=%s", c.baseUri, c.passTicket)
 	params := make(map[string]interface{})
 
-	params["BaseRequest"] = this.baseRequest
+	params["BaseRequest"] = c.baseRequest
 	params["Code"] = 3
-	params["FromUserName"] = this.user["UserName"]
-	params["ToUserName"] = this.user["UserName"]
+	params["FromUserName"] = c.user["UserName"]
+	params["ToUserName"] = c.user["UserName"]
 	params["ClientMsgId"] = int(time.Now().Unix())
 
-	res, err := this.doPost(urlReq, params, true)
+	res, err := c.doPost(urlReq, params, true)
 	if err != nil {
 		return false
 	}
@@ -71,21 +71,21 @@ var (
 	syncCheckRegexp = regexp.MustCompile(`window.synccheck={retcode:"(\d+)",selector:"(\d+)"}`)
 )
 
-func (this *Client) synccheck() (retcode, selector string, ok bool) {
-	urlReq := fmt.Sprintf("https://%s/cgi-bin/mmwebwx-bin/synccheck", this.syncHost)
+func (c *Client) synccheck() (retcode, selector string, ok bool) {
+	urlReq := fmt.Sprintf("https://%s/cgi-bin/mmwebwx-bin/synccheck", c.syncHost)
 
 	v := url.Values{}
 	v.Add("r", util.UnixTimestamp())
-	v.Add("sid", this.sid)
-	v.Add("uin", this.uin)
-	v.Add("skey", this.skey)
-	v.Add("deviceid", this.deviceId)
-	v.Add("synckey", this.synckey)
+	v.Add("sid", c.sid)
+	v.Add("uin", c.uin)
+	v.Add("skey", c.skey)
+	v.Add("deviceid", c.deviceId)
+	v.Add("synckey", c.synckey)
 	v.Add("_", util.UnixTimestamp())
 
 	urlReq = urlReq + "?" + v.Encode()
 
-	data, err := this.doGet(urlReq)
+	data, err := c.doGet(urlReq)
 	if err != nil {
 		return
 	}
@@ -98,13 +98,13 @@ func (this *Client) synccheck() (retcode, selector string, ok bool) {
 	return found[1], found[2], true
 }
 
-func (this *Client) webwxsync() interface{} {
-	urlReq := fmt.Sprintf("%s/webwxsync?sid=%s&skey=%s&pass_ticket=%s", this.baseUri, this.sid, this.skey, this.passTicket)
+func (c *Client) webwxsync() interface{} {
+	urlReq := fmt.Sprintf("%s/webwxsync?sid=%s&skey=%s&pass_ticket=%s", c.baseUri, c.sid, c.skey, c.passTicket)
 	params := make(map[string]interface{})
-	params["BaseRequest"] = this.baseRequest
-	params["SyncKey"] = this.syncKeyMap
+	params["BaseRequest"] = c.baseRequest
+	params["SyncKey"] = c.syncKeyMap
 	params["rr"] = ^int(time.Now().Unix())
-	res, err := this.doPost(urlReq, params, true)
+	res, err := c.doPost(urlReq, params, true)
 	if err != nil {
 		return false
 	}
@@ -113,8 +113,8 @@ func (this *Client) webwxsync() interface{} {
 	retCode := data["BaseResponse"].(map[string]interface{})["Ret"].(int)
 
 	if retCode == 0 {
-		this.syncKeyMap = data["SyncKey"].(map[string]interface{})
-		this.setsynckey()
+		c.syncKeyMap = data["SyncKey"].(map[string]interface{})
+		c.setsynckey()
 	}
 
 	return data

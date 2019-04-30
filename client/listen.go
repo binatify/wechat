@@ -7,16 +7,16 @@ import (
 	"github.com/binatify/wechat/util"
 )
 
-func (this *Client) Listen(handler func(interface{})) {
-	util.RpcCall("[*] 开启状态通知 ...", this.webwxstatusnotify)
-	util.RpcCall("[*] 进行同步线路测试 ...", this.pingSynccheck)
+func (c *Client) Listen(handler func(interface{})) {
+	util.RpcCall("[*] 开启状态通知 ...", c.webwxstatusnotify)
+	util.RpcCall("[*] 进行同步线路测试 ...", c.pingSynccheck)
 
 	log.Println("[*] 开始接收消息 ...")
 
 	for {
-		time.Sleep(this.duration)
+		time.Sleep(c.duration)
 
-		retcode, selector, ok := this.synccheck()
+		retcode, selector, ok := c.synccheck()
 		if !ok {
 			continue
 		}
@@ -34,7 +34,7 @@ func (this *Client) Listen(handler func(interface{})) {
 		if retcode == "0" {
 			switch selector {
 			case "2":
-				r := this.webwxsync()
+				r := c.webwxsync()
 
 				switch r.(type) {
 				case bool:
@@ -45,13 +45,13 @@ func (this *Client) Listen(handler func(interface{})) {
 				}
 
 			case "6", "4":
-				this.webwxsync()
+				c.webwxsync()
 			}
 		}
 	}
 }
 
-func (this *Client) pingSynccheck() (ok bool) {
+func (c *Client) pingSynccheck() (ok bool) {
 	syncHost := []string{
 		"webpush.wx.qq.com",
 		"webpush2.wx.qq.com",
@@ -62,8 +62,8 @@ func (this *Client) pingSynccheck() (ok bool) {
 	}
 
 	for _, host := range syncHost {
-		this.syncHost = host
-		_, _, ok := this.synccheck()
+		c.syncHost = host
+		_, _, ok := c.synccheck()
 		if ok {
 			return true
 		}

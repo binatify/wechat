@@ -21,10 +21,10 @@ const (
 	loginTimeout = "408"
 )
 
-func (this *Client) getUUID() (ok bool) {
+func (c *Client) getUUID() (ok bool) {
 	url := "https://login.weixin.qq.com/jslogin?appid=wx782c26e4c19acffb&fun=new&lang=zh_CN&_=" + util.UnixTimestamp()
 
-	data, err := this.doGet(url)
+	data, err := c.doGet(url)
 	if err != nil {
 		return
 	}
@@ -36,13 +36,13 @@ func (this *Client) getUUID() (ok bool) {
 		return
 	}
 
-	this.uuid = found[1]
+	c.uuid = found[1]
 	return true
 }
 
-func (this *Client) qrCode() (ok bool) {
-	url := fmt.Sprintf("https://login.weixin.qq.com/qrcode/%s?t=webwx&_=%s", this.uuid, util.UnixTimestamp())
-	resp, err := this.doGet(url)
+func (c *Client) qrCode() (ok bool) {
+	url := fmt.Sprintf("https://login.weixin.qq.com/qrcode/%s?t=webwx&_=%s", c.uuid, util.UnixTimestamp())
+	resp, err := c.doGet(url)
 	if err != nil {
 		log.Fatalf("this.doGet(%s): %v", url, err)
 		return
@@ -59,26 +59,26 @@ func (this *Client) qrCode() (ok bool) {
 		exec.Command("open", path).Run()
 	} else {
 		go func() {
-			fmt.Printf("please open on web broswer %s/qrcode", this.cfg.Listen)
+			fmt.Printf("please open on web broswer %s/qrcode", c.cfg.Listen)
 			http.HandleFunc("/qrcode", func(w http.ResponseWriter, req *http.Request) {
 				http.ServeFile(w, req, "qrcode.jpg")
 				return
 			})
-			http.ListenAndServe(this.cfg.Listen, nil)
+			http.ListenAndServe(c.cfg.Listen, nil)
 		}()
 	}
 	return true
 }
 
-func (this *Client) qrCodeConfirm() bool {
+func (c *Client) qrCodeConfirm() bool {
 	for {
-		if !this.doConfirm(1) {
+		if !c.doConfirm(1) {
 			continue
 		}
 
 		log.Println("[*] 请在手机上点击确认 ...")
 
-		if !this.doConfirm(0) {
+		if !c.doConfirm(0) {
 			continue
 		}
 
@@ -88,13 +88,13 @@ func (this *Client) qrCodeConfirm() bool {
 	return true
 }
 
-func (this *Client) doConfirm(tip int) (ok bool) {
+func (c *Client) doConfirm(tip int) (ok bool) {
 	time.Sleep(time.Duration(tip) * time.Second)
 
 	url := "https://login.weixin.qq.com/cgi-bin/mmwebwx-bin/login"
-	url += "?tip=" + strconv.Itoa(tip) + "&uuid=" + this.uuid + "&_=" + util.UnixTimestamp()
+	url += "?tip=" + strconv.Itoa(tip) + "&uuid=" + c.uuid + "&_=" + util.UnixTimestamp()
 
-	data, err := this.doGet(url)
+	data, err := c.doGet(url)
 	if err != nil {
 		return
 	}
@@ -112,11 +112,11 @@ func (this *Client) doConfirm(tip int) (ok bool) {
 
 			if len(found) > 1 {
 				rUri := found[1] + "&fun=new"
-				this.redirectUri = rUri
+				c.redirectUri = rUri
 				re = regexp.MustCompile(`/`)
 
 				found := re.FindAllStringIndex(rUri, -1)
-				this.baseUri = rUri[:found[len(found)-1][0]]
+				c.baseUri = rUri[:found[len(found)-1][0]]
 				return true
 			}
 
@@ -144,8 +144,8 @@ type loginResult struct {
 	PassTicket string `xml:"pass_ticket"`
 }
 
-func (this *Client) login() (ok bool) {
-	data, err := this.doGet(this.redirectUri)
+func (c *Client) login() (ok bool) {
+	data, err := c.doGet(c.redirectUri)
 	if err != nil {
 		return
 	}
@@ -158,16 +158,16 @@ func (this *Client) login() (ok bool) {
 		return false
 	}
 
-	this.skey = v.Skey
-	this.sid = v.Wxsid
-	this.uin = v.Wxuin
-	this.passTicket = v.PassTicket
+	c.skey = v.Skey
+	c.sid = v.Wxsid
+	c.uin = v.Wxuin
+	c.passTicket = v.PassTicket
 
-	this.baseRequest = make(map[string]interface{})
-	this.baseRequest["Uin"], _ = strconv.Atoi(v.Wxuin)
-	this.baseRequest["Sid"] = v.Wxsid
-	this.baseRequest["Skey"] = v.Skey
-	this.baseRequest["DeviceID"] = this.deviceId
+	c.baseRequest = make(map[string]interface{})
+	c.baseRequest["Uin"], _ = strconv.Atoi(v.Wxuin)
+	c.baseRequest["Sid"] = v.Wxsid
+	c.baseRequest["Skey"] = v.Skey
+	c.baseRequest["DeviceID"] = c.deviceId
 
 	return true
 }
