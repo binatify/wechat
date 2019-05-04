@@ -2,29 +2,10 @@ package util
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
-	"os"
 	"strconv"
 	"strings"
 	"time"
 )
-
-func RpcCall(description string, f func() bool) {
-	log.Println(description)
-
-	t1 := time.Now().UnixNano()
-
-	ok := f()
-	if ok {
-		cost := fmt.Sprintf("%.5f", (float64(time.Now().UnixNano()-t1) / float64(time.Second)))
-		log.Print("[*] 成功, 用时" + cost + "秒")
-	} else {
-		log.Println("[*] 失败")
-		log.Println("[*] 退出程序")
-		os.Exit(0)
-	}
-}
 
 func UnixTimestamp() string {
 	return strconv.Itoa(int(time.Now().Unix()))
@@ -69,5 +50,6 @@ func formatData(input interface{}) interface{} {
 	} else {
 		return false
 	}
+
 	return input
 }

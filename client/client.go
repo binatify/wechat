@@ -1,7 +1,8 @@
 package client
 
 import (
-	"log"
+	"fmt"
+	"github.com/sirupsen/logrus"
 	"math/rand"
 	"net/http"
 	"net/http/cookiejar"
@@ -9,13 +10,13 @@ import (
 	"time"
 
 	"github.com/binatify/wechat/config"
-	"github.com/binatify/wechat/util"
 )
 
 type Client struct {
 	cfg *config.Config
+	log *logrus.Entry
 
-	skey       string
+	sKey       string
 	sid        string
 	uin        string
 	passTicket string
@@ -25,9 +26,9 @@ type Client struct {
 	redirectUri string
 	baseUri     string
 
+	syncKey     string
 	user        map[string]interface{}
 	syncKeyMap  map[string]interface{}
-	synckey     string
 	baseRequest map[string]interface{}
 
 	syncHost string
@@ -40,7 +41,7 @@ func init() {
 	rand.Seed(time.Now().Unix())
 }
 
-func New(cfg *config.Config) *Client {
+func New(cfg *config.Config, log *logrus.Entry) *Client {
 	gCookieJar, _ := cookiejar.New(nil)
 
 	httpClient := &http.Client{
@@ -57,23 +58,43 @@ func New(cfg *config.Config) *Client {
 	deviceId := "e" + str[2:17]
 
 	return &Client{
-		deviceId: deviceId,
-		Client:   httpClient,
+		log: log,
 
+		deviceId: deviceId,
 		duration: time.Duration(cfg.Duration) * time.Second,
+
+		Client: httpClient,
 	}
 }
 
 func (c *Client) Start() *Client {
-	log.Println("[*] 微信网页版启动中 ...")
 
-	util.RpcCall("[*] 正在获取 uuid ...", c.getUUID)
+	c.log.Println("微信客户端启动中 ...")
 
-	util.RpcCall("[*] 正在获取二维码 ...", c.qrCode)
-	util.RpcCall("[*] 请使用微信扫描二维码 ...", c.qrCodeConfirm)
-	util.RpcCall("[*] 正在登录 ...", c.login)
+	c.rpcCall("正在获取 uuid ...", c.getUUID)
 
-	util.RpcCall("[*] 获取微信初始化数据 ...", c.webwxinit)
+	c.rpcCall("正在获取二维码 ...", c.qrCode)
+
+	c.rpcCall("请使用微信扫描二维码 ...", c.qrCodeConfirm)
+
+	c.rpcCall("正在登录 ...", c.login)
+
+	c.rpcCall("获取微信初始化数据 ...", c.wxInit)
 
 	return c
+
+}
+
+func (c *Client) rpcCall(description string, f func() bool) {
+	c.log.Println(description)
+
+	t1 := time.Now().UnixNano()
+
+	if ok := f(); ok {
+		cost := fmt.Sprintf("%.5f", float64(time.Now().UnixNano()-t1)/float64(time.Second))
+		c.log.Print("成功, 用时" + cost + "秒")
+		return
+	}
+
+	c.log.Panic("启动失败，退出程序")
 }

@@ -4,7 +4,6 @@ import (
 	"encoding/xml"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os/exec"
 	"regexp"
@@ -17,7 +16,7 @@ import (
 
 const (
 	okCode       = "200"
-	loginedCode  = "201"
+	loggedCode   = "201"
 	loginTimeout = "408"
 )
 
@@ -37,55 +36,61 @@ func (c *Client) getUUID() (ok bool) {
 	}
 
 	c.uuid = found[1]
+
 	return true
 }
 
 func (c *Client) qrCode() (ok bool) {
 	url := fmt.Sprintf("https://login.weixin.qq.com/qrcode/%s?t=webwx&_=%s", c.uuid, util.UnixTimestamp())
+
 	resp, err := c.doGet(url)
 	if err != nil {
-		log.Fatalf("this.doGet(%s): %v", url, err)
+		c.log.Errorf("this.doGet(%s): %v", url, err)
 		return
 	}
 
 	path := "qrcode.jpg"
-	err = ioutil.WriteFile(path, resp, 0755)
-	if err != nil {
-		log.Fatalf("ioutil.WriteFile(qrcode.jpg): %v", err)
+	if err = ioutil.WriteFile(path, resp, 0755); err != nil {
+		c.log.Errorf("ioutil.WriteFile(qrcode.jpg): %v", err)
 		return
 	}
 
+	// hack way for login qrcode display
 	if runtime.GOOS == "darwin" {
 		exec.Command("open", path).Run()
 	} else {
 		go func() {
 			fmt.Printf("please open on web broswer %s/qrcode", c.cfg.Listen)
-			http.HandleFunc("/qrcode", func(w http.ResponseWriter, req *http.Request) {
-				http.ServeFile(w, req, "qrcode.jpg")
+			http.HandleFunc(path, func(w http.ResponseWriter, req *http.Request) {
+				http.ServeFile(w, req, path)
 				return
 			})
 			http.ListenAndServe(c.cfg.Listen, nil)
 		}()
 	}
+
 	return true
 }
 
-func (c *Client) qrCodeConfirm() bool {
-	for {
+func (c *Client) qrCodeConfirm() (ok bool) {
+	for retryTimes := 3; retryTimes > 0; retryTimes-- {
+
 		if !c.doConfirm(1) {
 			continue
 		}
 
-		log.Println("[*] 请在手机上点击确认 ...")
+		c.log.Println("请在手机上点击确认 ...")
 
 		if !c.doConfirm(0) {
 			continue
 		}
 
+		ok = true
+
 		break
 	}
 
-	return true
+	return
 }
 
 func (c *Client) doConfirm(tip int) (ok bool) {
@@ -120,15 +125,14 @@ func (c *Client) doConfirm(tip int) (ok bool) {
 				return true
 			}
 
-		case loginedCode:
+		case loggedCode:
 			return true
 
 		case loginTimeout:
-			log.Fatalln("[登陆超时]")
+			c.log.Error("登陆超时")
 
 		default:
-			log.Fatalln("[登陆异常]")
-
+			c.log.Panic("登陆异常")
 		}
 	}
 
@@ -152,13 +156,12 @@ func (c *Client) login() (ok bool) {
 
 	var v loginResult
 
-	err = xml.Unmarshal(data, &v)
-	if err != nil {
-		log.Fatalf("error: %v", err)
+	if err = xml.Unmarshal(data, &v); err != nil {
+		c.log.Errorf("xml.Unmarshal(%#v): %v", v, err)
 		return false
 	}
 
-	c.skey = v.Skey
+	c.sKey = v.Skey
 	c.sid = v.Wxsid
 	c.uin = v.Wxuin
 	c.passTicket = v.PassTicket

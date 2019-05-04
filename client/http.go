@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 )
@@ -12,7 +11,7 @@ import (
 func (c *Client) doGet(url string) (body []byte, err error) {
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Fatalf("http.NewRequest(%s): %v\n", url, err)
+		c.log.Errorf("http.NewRequest(%s): %v\n", url, err)
 		return
 	}
 
@@ -26,7 +25,7 @@ func (c *Client) doGet(url string) (body []byte, err error) {
 
 	resp, err := c.Do(req)
 	if err != nil {
-		log.Fatalf("httpClient.Do(): %v\n", err)
+		c.log.Errorf("httpClient.Do(): %v\n", err)
 		return
 	}
 
@@ -34,7 +33,7 @@ func (c *Client) doGet(url string) (body []byte, err error) {
 
 	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("ioutil.ReadAll(): %v\n", err)
+		c.log.Errorf("ioutil.ReadAll(): %v\n", err)
 	}
 
 	return
@@ -51,7 +50,7 @@ func (c *Client) doPost(reqURL string, params map[string]interface{}, isJson boo
 
 		request, err := http.NewRequest(http.MethodPost, reqURL, bytes.NewBuffer(payload))
 		if err != nil {
-			log.Fatalf("http.NewRequest(%s): %v\n", reqURL, err)
+			c.log.Errorf("http.NewRequest(%s): %v\n", reqURL, err)
 			return nil, err
 		}
 
@@ -72,7 +71,7 @@ func (c *Client) doPost(reqURL string, params map[string]interface{}, isJson boo
 	}
 
 	if err != nil {
-		log.Fatalf("doPost(): %v", err)
+		c.log.Errorf("doPost(): %v", err)
 		return
 	}
 
@@ -80,7 +79,7 @@ func (c *Client) doPost(reqURL string, params map[string]interface{}, isJson boo
 
 	body, err = ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalf("ioutil.ReadAll(): %v", err)
+		c.log.Errorf("ioutil.ReadAll(): %v", err)
 	}
 
 	return
